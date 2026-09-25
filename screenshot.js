@@ -10,13 +10,13 @@ const { chromium } = require('playwright');
 
   const page = await context.newPage();
 
-  // Change keywords (q=...) or location (geo=...) here if needed
-  const targetUrl = 'https://trends.google.com/trends/explore?date=now%201-d&geo=US&q=Artificial%20Intelligence';
+  // Updated target URL with your specific comparison topics, 7-day timeframe, and Worldwide geo
+  const targetUrl = 'https://trends.google.com/explore?date=now%207-d&geo=Worldwide&q=%2Fg%2F11yjly_225%2C%2Fg%2F11xt4k_q7r%2C%2Fg%2F11xt4srq2w%2C%2Fg%2F11xvlz7chy%2C%2Fg%2F11xt00ktl_';
 
   await page.goto(targetUrl, { waitUntil: 'networkidle' });
 
-  // Wait 5 seconds for charts to finish rendering
-  await page.waitForTimeout(5000);
+  // Wait 8 seconds for all comparison charts and widgets to finish loading
+  await page.waitForTimeout(8000);
 
   // Save screenshot
   await page.screenshot({ path: 'latest_trends.png', fullPage: false });
