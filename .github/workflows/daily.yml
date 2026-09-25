@@ -20,11 +20,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install Selenium & Webdriver Manager
+      - name: Install Dependencies
         run: |
-          pip install selenium webdriver-manager
+          pip install pytrends pandas matplotlib seaborn
 
-      - name: Run Screenshot Script
+      - name: Run Trends Generator
         run: python script.py
 
       - name: Commit and Push Updated Screenshot
