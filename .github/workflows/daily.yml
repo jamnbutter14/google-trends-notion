@@ -15,17 +15,21 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.11'
+          node-version: 22
 
-      - name: Install Dependencies
+      - name: Install Playwright
         run: |
-          pip install pytrends pandas matplotlib seaborn
+          npm init -y
+          npm install playwright playwright-extra puppeteer-extra-plugin-stealth
 
-      - name: Run Trends Generator
-        run: python script.py
+      - name: Install Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Screenshot Script
+        run: node screenshot.js
 
       - name: Commit and Push Updated Screenshot
         run: |
