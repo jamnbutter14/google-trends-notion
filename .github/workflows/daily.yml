@@ -15,19 +15,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          node-version: 22
+          python-version: '3.11'
 
-      - name: Install Playwright
+      - name: Install Selenium & Webdriver Manager
         run: |
-          npm init -y
-          npm install playwright
-          npx playwright install --with-deps chromium
+          pip install selenium webdriver-manager
 
       - name: Run Screenshot Script
-        run: node screenshot.js
+        run: python script.py
 
       - name: Commit and Push Updated Screenshot
         run: |
