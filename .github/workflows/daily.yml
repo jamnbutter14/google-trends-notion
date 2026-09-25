@@ -1,0 +1,35 @@
+name: Capture Daily Google Trends
+
+on:
+  schedule:
+    # Runs automatically every day at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch: # Allows you to run it manually anytime
+
+jobs:
+  take-screenshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Playwright
+        run: |
+          npm init -y
+          npm install playwright
+          npx playwright install --with-deps chromium
+
+      - name: Run Screenshot Script
+        run: node screenshot.js
+
+      - name: Commit and Push Updated Screenshot
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add latest_trends.png
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update daily trends screenshot" && git push)
