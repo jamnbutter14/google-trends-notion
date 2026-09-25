@@ -3,52 +3,33 @@ const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch({
     headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-blink-features=AutomationControlled'
-    ]
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
 
   const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-    viewport: { width: 1400, height: 900 },
-    locale: 'en-US'
+    viewport: { width: 1200, height: 700 }
   });
 
   const page = await context.newPage();
 
-  const targetUrl = 'https://trends.google.com/explore?date=now%207-d&geo=Worldwide&q=%2Fg%2F11yjly_225%2C%2Fg%2F11xt4k_q7r%2C%2Fg%2F11xt4srq2w%2C%2Fg%2F11xvlz7chy%2C%2Fg%2F11xt00ktl_';
+  // URL Widget nhúng trực tiếp biểu đồ Google Trends
+  const embedUrl = 'https://trends.google.com/trends/embed/explore/TIMESERIES?req=%7B%22comparisonItem%22%3A%5B%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11yjly_225%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xt4k_q7r%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xt4srq2w%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xvlz7chy%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xt00ktl_%22%7D%5D%7D%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D&tz=-420&eq=date%3Dnow%25207-d%26geo%3DWorldwide%26q%3D%252Fg%252F11yjly_225%2C%252Fg%252F11xt4k_q7r%2C%252Fg%252F11xt4srq2w%2C%252Fg%252F11xvlz7chy%2C%252Fg%252F11xt00ktl_';
 
-  console.log('Navigating to Google Trends...');
-  await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
-  // 1. Tự động bấm nút "Remain on Classic Explore" nếu màn hình yêu cầu xuất hiện
+  console.log('Tải Widget Google Trends...');
+  
   try {
-    const classicBtn = page.locator('button:has-text("Remain on Classic Explore"), a:has-text("Remain on Classic Explore")').first();
-    if (await classicBtn.isVisible({ timeout: 5000 })) {
-      console.log('Clicking "Remain on Classic Explore"...');
-      await classicBtn.click();
-    }
-  } catch (e) {
-    console.log('No "Classic Explore" popup detected.');
+    await page.goto(embedUrl, { waitUntil: 'networkidle', timeout: 60000 });
+    
+    // Đợi biểu đồ vẽ xong
+    await page.waitForTimeout(5000);
+
+    // Chụp màn hình
+    await page.screenshot({ path: 'latest_trends.png' });
+    console.log('Chụp ảnh thành công!');
+  } catch (err) {
+    console.error('Lỗi khi chụp ảnh:', err);
+    process.exit(1);
+  } finally {
+    await browser.close();
   }
-
-  // 2. Đồng ý Cookie banner nếu có
-  try {
-    const cookieBtn = page.locator('button:has-text("Reject all"), button:has-text("Accept all"), button:has-text("Got it")').first();
-    if (await cookieBtn.isVisible({ timeout: 3000 })) {
-      await cookieBtn.click();
-    }
-  } catch (e) {}
-
-  // 3. Đợi cho biểu đồ và dữ liệu tải xong
-  console.log('Waiting for trends charts to load...');
-  await page.waitForTimeout(10000);
-
-  // 4. Chụp màn hình
-  await page.screenshot({ path: 'latest_trends.png', fullPage: false });
-  console.log('Screenshot saved successfully!');
-
-  await browser.close();
 })();
