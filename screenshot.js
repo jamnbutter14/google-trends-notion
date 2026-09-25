@@ -1,7 +1,6 @@
 const { chromium } = require('playwright');
 
 (async () => {
-  // Launch browser with anti-detection flags
   const browser = await chromium.launch({
     headless: true,
     args: [
@@ -22,29 +21,34 @@ const { chromium } = require('playwright');
   const targetUrl = 'https://trends.google.com/explore?date=now%207-d&geo=Worldwide&q=%2Fg%2F11yjly_225%2C%2Fg%2F11xt4k_q7r%2C%2Fg%2F11xt4srq2w%2C%2Fg%2F11xvlz7chy%2C%2Fg%2F11xt00ktl_';
 
   console.log('Navigating to Google Trends...');
+  await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
+  // 1. Tự động bấm nút "Remain on Classic Explore" nếu màn hình yêu cầu xuất hiện
   try {
-    // Navigate with a generous timeout
-    await page.goto(targetUrl, { waitUntil: 'commit', timeout: 90000 });
-
-    // Handle cookie banner if present
-    try {
-      const btn = page.locator('button:has-text("Reject all"), button:has-text("Accept all"), button:has-text("I agree")').first();
-      await btn.click({ timeout: 5000 });
-    } catch (e) {
-      // Banner not present or already accepted
+    const classicBtn = page.locator('button:has-text("Remain on Classic Explore"), a:has-text("Remain on Classic Explore")').first();
+    if (await classicBtn.isVisible({ timeout: 5000 })) {
+      console.log('Clicking "Remain on Classic Explore"...');
+      await classicBtn.click();
     }
-
-    // Wait 12 seconds for charts to render
-    await page.waitForTimeout(12000);
-
-    // Save screenshot
-    await page.screenshot({ path: 'latest_trends.png', fullPage: false });
-    console.log('Screenshot saved successfully!');
-  } catch (err) {
-    console.error('Error taking screenshot:', err);
-    process.exit(1);
-  } finally {
-    await browser.close();
+  } catch (e) {
+    console.log('No "Classic Explore" popup detected.');
   }
+
+  // 2. Đồng ý Cookie banner nếu có
+  try {
+    const cookieBtn = page.locator('button:has-text("Reject all"), button:has-text("Accept all"), button:has-text("Got it")').first();
+    if (await cookieBtn.isVisible({ timeout: 3000 })) {
+      await cookieBtn.click();
+    }
+  } catch (e) {}
+
+  // 3. Đợi cho biểu đồ và dữ liệu tải xong
+  console.log('Waiting for trends charts to load...');
+  await page.waitForTimeout(10000);
+
+  // 4. Chụp màn hình
+  await page.screenshot({ path: 'latest_trends.png', fullPage: false });
+  console.log('Screenshot saved successfully!');
+
+  await browser.close();
 })();
