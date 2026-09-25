@@ -1,29 +1,40 @@
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
+import pandas as pd
+import matplotlib.pyplot as plt
+from pytrends.request import TrendReq
 
-chrome_options = Options()
-chrome_options.add_argument("--headless=new")
-chrome_options.add_argument("--no-sandbox")
-chrome_options.add_argument("--disable-dev-shm-usage")
-chrome_options.add_argument("--disable-gpu")
-chrome_options.add_argument("--window-size=1200,800")
+# Khởi tạo kết nối Google Trends
+pytrends = TrendReq(hl='en-US', tz=360)
 
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+# Danh sách mã Topic IDs từ URL của bạn
+topic_ids = [
+    "/g/11yjly_225",
+    "/g/11xt4k_q7r",
+    "/g/11xt4srq2w",
+    "/g/11xvlz7chy",
+    "/g/11xt00ktl_"
+]
 
-# Official Google Trends Embed URL for your exact query, 7-day duration, and Worldwide geo
-embed_url = "https://trends.google.com/trends/embed/explore/TIMESERIES?req=%7B%22comparisonItem%22%3A%5B%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11yjly_225%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xt4k_q7r%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xt4srq2w%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xvlz7chy%22%7D%5D%7D%7D%2C%7B%22geo%22%3A%7B%7D%2C%22complexKeywordsRestriction%22%3A%7B%22keyword%22%3A%5B%7B%22type%22%3A%22ENTITY%22%2C%22value%22%3A%22%2Fg%2F11xt00ktl_%22%7D%5D%7D%7D%5D%2C%22category%22%3A0%2C%22property%22%3A%22%22%7D&tz=-420&eq=date%3Dnow%25207-d%26geo%3DWorldwide%26q%3D%252Fg%252F11yjly_225%2C%252Fg%252F11xt4k_q7r%2C%252Fg%252F11xt4srq2w%2C%252Fg%252F11xvlz7chy%2C%252Fg%252F11xt00ktl_"
+print("Đang tải dữ liệu từ Google Trends...")
 
-print("Navigating to Trends Embed Widget...")
-driver.get(embed_url)
+# Lấy dữ liệu 7 ngày gần nhất (now 7-d) trên toàn cầu (Worldwide)
+pytrends.build_payload(topic_ids, timeframe='now 7-d', geo='')
+df = pytrends.interest_over_time()
 
-# Wait 8 seconds for the SVG chart lines to draw
-time.sleep(8)
+if 'isPartial' in df.columns:
+    df = df.drop(columns=['isPartial'])
 
-print("Capturing chart...")
-driver.save_screenshot("latest_trends.png")
+# Tiến hành vẽ biểu đồ
+plt.figure(figsize=(12, 6), dpi=150)
+for col in df.columns:
+    plt.plot(df.index, df[col], label=col, linewidth=2)
 
-driver.quit()
-print("Done!")
+plt.title("Google Trends - Interest Over Time (Past 7 Days)", fontsize=14, fontweight='bold', pad=15)
+plt.xlabel("Date/Time", fontsize=10)
+plt.ylabel("Search Interest", fontsize=10)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(loc='upper right')
+plt.tight_layout()
+
+# Lưu thành ảnh
+plt.savefig("latest_trends.png")
+print("Đã tạo và lưu biểu đồ latest_trends.png thành công!")
