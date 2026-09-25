@@ -2,9 +2,11 @@ name: Capture Daily Google Trends
 
 on:
   schedule:
-    # Runs automatically every day at 00:00 UTC
     - cron: '0 0 * * *'
-  workflow_dispatch: # Allows you to run it manually anytime
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   take-screenshot:
@@ -16,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
 
       - name: Install Playwright
         run: |
